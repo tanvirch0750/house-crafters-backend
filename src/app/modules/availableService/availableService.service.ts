@@ -1,4 +1,4 @@
-import { AvailableService, Prisma } from '@prisma/client';
+import { AvailableService, BookingStatus, Prisma } from '@prisma/client';
 import httpStatus from 'http-status';
 import ApiError from '../../../errors/ApiError';
 import { calculatePagination } from '../../../helpers/paginationHelper';
@@ -133,6 +133,7 @@ const getAllRemainingServices = async (
     const bookings = await prisma.booking.findMany({
       where: {
         date: date,
+        status: BookingStatus.pending || BookingStatus.confirmed,
       },
     });
 

@@ -403,6 +403,7 @@ enum BookingStatus {
 enum PaymentStatus {
   paid
   notPaid
+  rejected
 }
 
 enum PaymentMethod {
