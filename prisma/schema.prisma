@@ -163,6 +163,7 @@ model Slot {
 
   availableServiceId String
   availableService   AvailableService @relation(fields: [availableServiceId], references: [id])
+  bookings           Booking[]
 
   @@unique([startTime, serviceTeamId, availableServiceId])
   @@map("slot")
@@ -181,7 +182,8 @@ model Booking {
   userId String
   user   Users  @relation(fields: [userId], references: [id])
 
-  slot String?
+  slotId String
+  slot   Slot   @relation(fields: [slotId], references: [id])
 
   serviceId String
   service   AvailableService @relation(fields: [serviceId], references: [id])
