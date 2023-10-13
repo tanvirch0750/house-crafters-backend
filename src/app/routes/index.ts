@@ -87,10 +87,7 @@ const moduleRoutes = [
     path: '/notification',
     route: notificationRoutes,
   },
-  {
-    path: '/website-content',
-    route: websiteContentRoutes,
-  },
+  { path: '/website-content', route: websiteContentRoutes },
   {
     path: '/showcase',
     route: showcaseWorkRoutes,
