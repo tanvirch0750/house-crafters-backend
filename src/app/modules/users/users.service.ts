@@ -228,15 +228,19 @@ const updateDataById = async (
     throw new ApiError('User does not exist', httpStatus.NOT_FOUND);
   }
 
+  if (payload.password) {
+    payload.password = await bcrypt.hash(
+      payload.password,
+      Number(config.bcrypt_salt_rounds)
+    );
+  }
+
   const result = await prisma.users.update({
     where: {
       id,
     },
     data: {
       ...payload,
-      password: payload.password
-        ? await bcrypt.hash(payload.password, Number(config.bcrypt_salt_rounds))
-        : undefined,
     },
     select: {
       id: true,
@@ -320,15 +324,19 @@ const updateProfileDataById = async (
     throw new ApiError('You can not change role', httpStatus.NOT_FOUND);
   }
 
+  if (payload.password) {
+    payload.password = await bcrypt.hash(
+      payload.password,
+      Number(config.bcrypt_salt_rounds)
+    );
+  }
+
   const result = await prisma.users.update({
     where: {
       id: verifiedUser.userId,
     },
     data: {
       ...payload,
-      password: payload.password
-        ? await bcrypt.hash(payload.password, Number(config.bcrypt_salt_rounds))
-        : undefined,
     },
     select: {
       id: true,

@@ -1,6 +1,4 @@
-import { WeekDays } from '@prisma/client';
-
-export const weekDays: WeekDays[] = [
+export const weekDays = [
   'saturday',
   'sunday',
   'monday',
