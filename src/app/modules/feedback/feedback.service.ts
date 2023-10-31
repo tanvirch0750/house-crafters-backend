@@ -9,7 +9,11 @@ const insertIntoDB = async (data: Feedback): Promise<Feedback> => {
 };
 
 const getAllFromDB = async (): Promise<Feedback[]> => {
-  const result = await prisma.feedback.findMany();
+  const result = await prisma.feedback.findMany({
+    include: {
+      user: true,
+    },
+  });
 
   return result;
 };

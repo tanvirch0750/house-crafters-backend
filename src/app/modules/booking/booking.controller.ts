@@ -86,8 +86,14 @@ export const getAllBooking: RequestHandler = catchAsync(
 );
 
 export const getSingleBooking: RequestHandler = catchAsync(async (req, res) => {
+  const token = req.headers.authorization;
+
+  const verifiedUser = jwtHelpers.verifyToken(
+    token as string,
+    config.jwt.secret as string
+  );
   const { id } = req.params;
-  const result = await BookingServices.getSingleBooking(id);
+  const result = await BookingServices.getSingleBooking(id, verifiedUser);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

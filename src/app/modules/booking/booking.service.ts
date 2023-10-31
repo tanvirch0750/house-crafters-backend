@@ -222,18 +222,39 @@ const getAllBooking = async (
   };
 };
 
-const getSingleBooking = async (id: string): Promise<Booking | null> => {
-  const result = await prisma.booking.findUnique({
-    where: {
-      id,
-    },
-    include: {
-      user: true,
-      slot: true,
-      service: true,
-      payment: true,
-    },
-  });
+const getSingleBooking = async (
+  id: string,
+  verifiedUser: JwtPayload
+): Promise<Booking | null> => {
+  let result;
+
+  if (verifiedUser.role === UserRole.customer) {
+    result = await prisma.booking.findUnique({
+      where: {
+        id,
+        userId: verifiedUser.userId,
+      },
+      include: {
+        user: true,
+        slot: true,
+        service: true,
+        payment: true,
+      },
+    });
+  } else {
+    result = await prisma.booking.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        user: true,
+        slot: true,
+        service: true,
+        payment: true,
+      },
+    });
+  }
+
   return result;
 };
 
