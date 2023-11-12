@@ -20,23 +20,22 @@ export const initiatePayment: RequestHandler = catchAsync(async (req, res) => {
 });
 
 export const paymentSuccess: RequestHandler = catchAsync(async (req, res) => {
-  console.log(req.query);
   const { bookingId, transactionId } = req.query;
 
-  if (!transactionId || !bookingId) {
+  if (!bookingId) {
     return res.redirect(`${config.forntend_url}/payment/fail`);
   }
 
   // @ts-ignore
-  //   const result = await PaymentServices.paymentSuccess(bookingId, transactionId);
+  const result = await PaymentServices.paymentSuccess(bookingId);
 
-  //   console.log(result);
+  console.log(result);
 
-  //   if (result) {
-  //     res.redirect(
-  //       `${config.forntend_url}/payment/success?transactionId=${transactionId}`
-  //     );
-  //   }
+  if (result) {
+    res.redirect(
+      `${config.forntend_url}/payment/success?bookingId=${bookingId}`
+    );
+  }
 
   // sendResponse(res, {
   //   statusCode: httpStatus.OK,

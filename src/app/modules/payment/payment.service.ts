@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { BookingStatus, PaymentStatus } from '@prisma/client';
 import httpStatus from 'http-status';
 import config from '../../../config';
 import ApiError from '../../../errors/ApiError';
@@ -55,7 +56,16 @@ const initiatePayment = async (bookingId: string): Promise<any> => {
       ship_country: 'Bangladesh',
     };
 
-    console.log(sslData);
+    const payment = await prisma.payment.update({
+      where: {
+        bookingId: bookingId,
+      },
+      data: {
+        transactionId: sslData.tran_id,
+      },
+    });
+
+    console.log(payment);
 
     const sslcz = new SSLCommerzPayment(
       config.ssl_store_id,
@@ -76,58 +86,57 @@ const initiatePayment = async (bookingId: string): Promise<any> => {
   }
 };
 
-// const paymentSuccess = async (bookingId: string, transactionId: string) => {
-//   console.log(bookingId, transactionId);
+const paymentSuccess = async (bookingId: string) => {
+  console.log(bookingId);
 
-//   // Checking if the available service exists
-//   const bookings = await prisma.booking.findUnique({
-//     where: {
-//       id: bookingId,
-//     },
-//   });
+  // Checking if the available service exists
+  const bookings = await prisma.booking.findUnique({
+    where: {
+      id: bookingId,
+    },
+  });
 
-//   if (!bookings) {
-//     throw new ApiError('There is no booking', httpStatus.NOT_FOUND);
-//   }
+  if (!bookings) {
+    throw new ApiError('There is no booking', httpStatus.NOT_FOUND);
+  }
 
-//   if (bookings.status === BookingStatus.confirmed) {
-//     throw new ApiError('This booking already completed', httpStatus.NOT_FOUND);
-//   }
+  if (bookings.status === BookingStatus.confirmed) {
+    throw new ApiError('This booking already completed', httpStatus.NOT_FOUND);
+  }
 
-//   if (bookings.status === BookingStatus.rejected) {
-//     throw new ApiError('This booking already canceled', httpStatus.NOT_FOUND);
-//   }
+  if (bookings.status === BookingStatus.rejected) {
+    throw new ApiError('This booking already canceled', httpStatus.NOT_FOUND);
+  }
 
-//   const finishBooking = await prisma.$transaction(async transactionClient => {
-//     const book = await transactionClient.booking.update({
-//       where: {
-//         id: bookingId,
-//       },
-//       data: {
-//         status: BookingStatus.confirmed,
-//       },
-//     });
+  const finishBooking = await prisma.$transaction(async transactionClient => {
+    const book = await transactionClient.booking.update({
+      where: {
+        id: bookingId,
+      },
+      data: {
+        status: BookingStatus.confirmed,
+      },
+    });
 
-//     const payment = await transactionClient.payment.update({
-//       where: {
-//         bookingId: bookingId,
-//       },
-//       data: {
-//         paymentStatus: PaymentStatus.paid,
-//         transactionId: transactionId,
-//       },
-//     });
+    const payment = await transactionClient.payment.update({
+      where: {
+        bookingId: bookingId,
+      },
+      data: {
+        paymentStatus: PaymentStatus.paid,
+      },
+    });
 
-//     return {
-//       booking: book,
-//       payment: payment,
-//     };
-//   });
+    return {
+      booking: book,
+      payment: payment,
+    };
+  });
 
-//   return finishBooking;
-// };
+  return finishBooking;
+};
 
 export const PaymentServices = {
   initiatePayment,
-  //   paymentSuccess,
+  paymentSuccess,
 };
