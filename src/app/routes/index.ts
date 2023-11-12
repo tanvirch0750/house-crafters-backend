@@ -6,6 +6,7 @@ import { faqRoutes } from '../modules/faq/faq.routes';
 import { featuredInRoutes } from '../modules/featuedIn/featuedIn.routes';
 import { feedbackRoutes } from '../modules/feedback/feedback.routes';
 import { notificationRoutes } from '../modules/notification/notification.routes';
+import { paymentRoutes } from '../modules/payment/payment.routes';
 import { reviewAndRatingRoutes } from '../modules/reviewAndRating/reviewAndRating.routes';
 import { serviceRoutes } from '../modules/service/service.routes';
 import { serviceCategoryRoutes } from '../modules/serviceCategory/serviceCategory.routes';
@@ -62,6 +63,10 @@ const moduleRoutes = [
   {
     path: '/booking',
     route: bookingRoutes,
+  },
+  {
+    path: '/payment',
+    route: paymentRoutes,
   },
   {
     path: '/review-and-rating',

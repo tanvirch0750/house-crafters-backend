@@ -1,0 +1,133 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import httpStatus from 'http-status';
+import config from '../../../config';
+import ApiError from '../../../errors/ApiError';
+import { generateTransactionId } from '../../../shared/generateTransactionId';
+import prisma from '../../../shared/prisma';
+const SSLCommerzPayment = require('sslcommerz-lts');
+
+const initiatePayment = async (bookingId: string): Promise<any> => {
+  try {
+    const bookings = await prisma.booking.findUnique({
+      where: {
+        id: bookingId,
+      },
+      include: {
+        service: true,
+        user: true,
+        payment: true,
+      },
+    });
+
+    if (!bookings) {
+      throw new ApiError('Invalid booking service', httpStatus.NOT_FOUND);
+    }
+
+    const transactionId = generateTransactionId();
+
+    const sslData = {
+      total_amount: bookings?.service?.price,
+      currency: 'BDT',
+      tran_id: transactionId, // use unique tran_id for each api call
+      success_url: `${config.backend_url}/payment/success?bookingId=${bookingId}`,
+      fail_url: `${config.backend_url}/payment/fail?bookingId=${bookingId}`,
+      cancel_url: `${config.backend_url}/payment/cancel`,
+      ipn_url: 'http://localhost:3030/ipn',
+      shipping_method: 'Courier',
+      product_name: bookings?.service?.serviceName,
+      product_category: 'Electronic',
+      product_profile: 'general',
+      cus_name: bookings?.user?.fullName,
+      cus_email: bookings?.user?.email,
+      cus_add1: bookings?.user?.address,
+      cus_country: 'Bangladesh',
+      cus_phone: bookings?.user?.contactNumber,
+      ship_name: bookings?.user?.fullName,
+      ship_add1: 'Dhaka',
+      ship_add2: 'Dhaka',
+      ship_city: 'Dhaka',
+      ship_state: 'Dhaka',
+      ship_postcode: 1000,
+      ship_country: 'Bangladesh',
+    };
+
+    console.log(sslData);
+
+    const sslcz = new SSLCommerzPayment(
+      config.ssl_store_id,
+      config.ssl_store_password,
+      config.ssl_is_live
+    );
+
+    // Wait for the init method to complete and get the response
+    const apiResponse: { GatewayPageURL: any } = await sslcz.init(sslData);
+
+    // Redirect the user to the payment gateway
+    let GatewayPageURL = apiResponse.GatewayPageURL;
+
+    return GatewayPageURL;
+  } catch (error) {
+    // Handle errors here
+    console.error(error);
+  }
+};
+
+// const paymentSuccess = async (bookingId: string, transactionId: string) => {
+//   console.log(bookingId, transactionId);
+
+//   // Checking if the available service exists
+//   const bookings = await prisma.booking.findUnique({
+//     where: {
+//       id: bookingId,
+//     },
+//   });
+
+//   if (!bookings) {
+//     throw new ApiError('There is no booking', httpStatus.NOT_FOUND);
+//   }
+
+//   if (bookings.status === BookingStatus.confirmed) {
+//     throw new ApiError('This booking already completed', httpStatus.NOT_FOUND);
+//   }
+
+//   if (bookings.status === BookingStatus.rejected) {
+//     throw new ApiError('This booking already canceled', httpStatus.NOT_FOUND);
+//   }
+
+//   const finishBooking = await prisma.$transaction(async transactionClient => {
+//     const book = await transactionClient.booking.update({
+//       where: {
+//         id: bookingId,
+//       },
+//       data: {
+//         status: BookingStatus.confirmed,
+//       },
+//     });
+
+//     const payment = await transactionClient.payment.update({
+//       where: {
+//         bookingId: bookingId,
+//       },
+//       data: {
+//         paymentStatus: PaymentStatus.paid,
+//         transactionId: transactionId,
+//       },
+//     });
+
+//     return {
+//       booking: book,
+//       payment: payment,
+//     };
+//   });
+
+//   return finishBooking;
+// };
+
+export const PaymentServices = {
+  initiatePayment,
+  //   paymentSuccess,
+};
