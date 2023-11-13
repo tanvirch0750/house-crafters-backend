@@ -87,8 +87,6 @@ const initiatePayment = async (bookingId: string): Promise<any> => {
 };
 
 const paymentSuccess = async (bookingId: string) => {
-  console.log(bookingId);
-
   // Checking if the available service exists
   const bookings = await prisma.booking.findUnique({
     where: {
@@ -136,7 +134,31 @@ const paymentSuccess = async (bookingId: string) => {
   return finishBooking;
 };
 
+const paymentFailed = async (bookingId: string) => {
+  // Checking if the available service exists
+  const bookings = await prisma.booking.findUnique({
+    where: {
+      id: bookingId,
+    },
+  });
+
+  if (!bookings) {
+    throw new ApiError('There is no booking', httpStatus.NOT_FOUND);
+  }
+
+  if (bookings.status === BookingStatus.confirmed) {
+    throw new ApiError('This booking already completed', httpStatus.NOT_FOUND);
+  }
+
+  if (bookings.status === BookingStatus.rejected) {
+    throw new ApiError('This booking already canceled', httpStatus.NOT_FOUND);
+  }
+
+  return bookings;
+};
+
 export const PaymentServices = {
   initiatePayment,
   paymentSuccess,
+  paymentFailed,
 };
