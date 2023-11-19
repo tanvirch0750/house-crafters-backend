@@ -134,10 +134,32 @@ const deleteDataById = async (id: string): Promise<ReviewAndRating> => {
   return result;
 };
 
+const averageReviewAndRating = async (id: string) => {
+  const reviews = await prisma.reviewAndRating.findMany({
+    where: {
+      serviceId: id,
+    },
+  });
+
+  // Calculate the average rating
+  if (reviews.length > 0) {
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating = totalRating / reviews.length;
+
+    // Ensure the average rating does not exceed 5
+    const roundedRating = Math.min(Math.round(averageRating), 5);
+
+    return roundedRating;
+  } else {
+    return 5; // Return 0 if there are no reviews for the service
+  }
+};
+
 export const ReviewAndRatingServices = {
   insertIntoDB,
   getAllFromDB,
   getDataById,
   updateDataById,
   deleteDataById,
+  averageReviewAndRating,
 };

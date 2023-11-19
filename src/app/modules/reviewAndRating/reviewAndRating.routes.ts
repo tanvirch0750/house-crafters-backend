@@ -7,6 +7,8 @@ import { validationSchema } from './reviewAndRating.validation';
 
 const router = express.Router();
 
+router.get('/average-rating/:id', ReviewAndRatingController.getAverageRating);
+
 router.get(
   '/:id',
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),

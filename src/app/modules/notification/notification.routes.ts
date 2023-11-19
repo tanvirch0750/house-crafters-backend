@@ -7,6 +7,17 @@ import { validationSchema } from './notification.validation';
 
 const router = express.Router();
 
+router.patch(
+  '/update-all',
+  auth(
+    ENUM_USER_ROLE.CUSTOMER,
+    ENUM_USER_ROLE.ADMIN,
+    ENUM_USER_ROLE.SUPER_ADMIN
+  ),
+
+  NotificationController.updateAll
+);
+
 router.get(
   '/:id',
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),

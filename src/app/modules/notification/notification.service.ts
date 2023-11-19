@@ -7,6 +7,7 @@ import { JwtPayload } from 'jsonwebtoken';
 import ApiError from '../../../errors/ApiError';
 import { IGenericPaginationResponse } from '../../../interfaces/genericPaginationResponse';
 import { IpaginationOptions } from '../../../interfaces/paginationOptions';
+import { asyncForEach } from '../../../shared/asyncForeach';
 import { findFilterConditions } from '../../../shared/findFilterConditions';
 import { orderByConditions } from '../../../shared/orderCondition';
 import prisma from '../../../shared/prisma';
@@ -98,6 +99,27 @@ const updateDataById = async (
   return result;
 };
 
+const updateAll = async (userId: string) => {
+  const notifications = await prisma.notification.findMany({
+    where: {
+      userId: userId,
+    },
+  });
+
+  await asyncForEach(notifications, async (noti: Notification) => {
+    await prisma.notification.update({
+      where: {
+        id: noti.id,
+      },
+      data: {
+        readStatus: true,
+      },
+    });
+  });
+
+  return notifications;
+};
+
 const deleteDataById = async (id: string): Promise<Notification> => {
   const result = await prisma.notification.delete({
     where: {
@@ -132,4 +154,5 @@ export const NotificationServices = {
   updateDataById,
   deleteDataById,
   getNotificationByUser,
+  updateAll,
 };

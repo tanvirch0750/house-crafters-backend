@@ -114,10 +114,25 @@ const deleteDataById: RequestHandler = catchAsync(async (req, res, next) => {
   });
 });
 
+const getAverageRating: RequestHandler = catchAsync(async (req, res) => {
+  const result = await ReviewAndRatingServices.averageReviewAndRating(
+    req.params.id
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    status: 'success',
+    message: 'Average rating retrived successfully',
+    data: result,
+  });
+});
+
 export const ReviewAndRatingController = {
   insertIntoDB,
   getAllFromDB,
   getDataById,
   updateDataById,
   deleteDataById,
+  getAverageRating,
 };

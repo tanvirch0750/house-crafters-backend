@@ -3,7 +3,11 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BookingStatus, PaymentStatus } from '@prisma/client';
+import {
+  BookingStatus,
+  NotificationStatus,
+  PaymentStatus,
+} from '@prisma/client';
 import httpStatus from 'http-status';
 import config from '../../../config';
 import ApiError from '../../../errors/ApiError';
@@ -92,6 +96,9 @@ const paymentSuccess = async (bookingId: string) => {
     where: {
       id: bookingId,
     },
+    include: {
+      service: true,
+    },
   });
 
   if (!bookings) {
@@ -125,6 +132,26 @@ const paymentSuccess = async (bookingId: string) => {
       },
     });
 
+    const updateAvlService = await transactionClient.availableService.update({
+      where: {
+        id: bookings.serviceId,
+      },
+      data: {
+        totalServiceProvided: {
+          increment: 1,
+        },
+      },
+    });
+
+    const notification = await transactionClient.notification.create({
+      data: {
+        message: `Payment is successful and your Service (${bookings.service.serviceName}) is confirmed!`,
+        userId: bookings.userId,
+        readStatus: false,
+        type: NotificationStatus.confirmation,
+      },
+    });
+
     return {
       booking: book,
       payment: payment,
@@ -140,6 +167,9 @@ const paymentFailed = async (bookingId: string) => {
     where: {
       id: bookingId,
     },
+    include: {
+      service: true,
+    },
   });
 
   if (!bookings) {
@@ -153,6 +183,15 @@ const paymentFailed = async (bookingId: string) => {
   if (bookings.status === BookingStatus.rejected) {
     throw new ApiError('This booking already canceled', httpStatus.NOT_FOUND);
   }
+
+  const notification = await prisma.notification.create({
+    data: {
+      message: `Payment is failed for this (${bookings.service.serviceName}) service`,
+      userId: bookings.userId,
+      readStatus: false,
+      type: NotificationStatus.confirmation,
+    },
+  });
 
   return bookings;
 };

@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Booking,
   BookingStatus,
+  NotificationStatus,
   Payment,
   PaymentMethod,
   PaymentStatus,
@@ -65,6 +68,15 @@ const bookService = async (
       },
     });
 
+    const notification = await transactionClient.notification.create({
+      data: {
+        message: `Your Service (${availableService.serviceName}) is Booked! Thank you for choosing us`,
+        userId: verifiedUser.userId,
+        readStatus: false,
+        type: NotificationStatus.confirmation,
+      },
+    });
+
     return {
       booking: book,
       payment: payment,
@@ -82,6 +94,10 @@ const cancelBooking = async (
   const bookings = await prisma.booking.findUnique({
     where: {
       id: bookingId,
+    },
+    include: {
+      service: true,
+      user: true,
     },
   });
   if (!bookings) {
@@ -118,6 +134,15 @@ const cancelBooking = async (
       },
     });
 
+    const notification = await transactionClient.notification.create({
+      data: {
+        message: `Your Service (${bookings.service.serviceName}) is cancelled!`,
+        userId: bookings.userId,
+        readStatus: false,
+        type: NotificationStatus.confirmation,
+      },
+    });
+
     return {
       booking: book,
       payment: payment,
@@ -135,6 +160,9 @@ const completeBooking = async (
   const bookings = await prisma.booking.findUnique({
     where: {
       id: bookingId,
+    },
+    include: {
+      service: true,
     },
   });
   if (!bookings) {
@@ -168,6 +196,26 @@ const completeBooking = async (
       },
       data: {
         paymentStatus: PaymentStatus.paid,
+      },
+    });
+
+    const updateAvlService = await transactionClient.availableService.update({
+      where: {
+        id: bookings.serviceId,
+      },
+      data: {
+        totalServiceProvided: {
+          increment: 1,
+        },
+      },
+    });
+
+    const notification = await transactionClient.notification.create({
+      data: {
+        message: `Your Service (${bookings.service.serviceName}) is confirmed!`,
+        userId: bookings.userId,
+        readStatus: false,
+        type: NotificationStatus.confirmation,
       },
     });
 

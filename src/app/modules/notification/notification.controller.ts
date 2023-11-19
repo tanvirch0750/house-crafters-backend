@@ -127,6 +127,25 @@ const getNotificationByUser: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const updateAll: RequestHandler = catchAsync(async (req, res) => {
+  const token = req.headers.authorization;
+
+  const verifiedUser = jwtHelpers.verifyToken(
+    token as string,
+    config.jwt.secret as string
+  );
+
+  const result = await NotificationServices.updateAll(verifiedUser?.userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    status: 'success',
+    message: 'Notifications updated successfully',
+    data: result,
+  });
+});
+
 export const NotificationController = {
   insertIntoDB,
   getAllFromDB,
@@ -134,4 +153,5 @@ export const NotificationController = {
   updateDataById,
   deleteDataById,
   getNotificationByUser,
+  updateAll,
 };
