@@ -19,6 +19,17 @@ router.patch(
 );
 
 router.get(
+  '/my-notification',
+  auth(
+    ENUM_USER_ROLE.ADMIN,
+    ENUM_USER_ROLE.CUSTOMER,
+    ENUM_USER_ROLE.SUPER_ADMIN,
+    ENUM_USER_ROLE.TEAM_MEMBER
+  ),
+  NotificationController.getNotificationByUser
+);
+
+router.get(
   '/:id',
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   NotificationController.getDataById
@@ -46,19 +57,12 @@ router.post(
 
 router.get(
   '/',
-  auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
-  NotificationController.getAllFromDB
-);
-
-router.get(
-  '/my-notification',
   auth(
     ENUM_USER_ROLE.ADMIN,
     ENUM_USER_ROLE.CUSTOMER,
-    ENUM_USER_ROLE.SUPER_ADMIN,
-    ENUM_USER_ROLE.TEAM_MEMBER
+    ENUM_USER_ROLE.SUPER_ADMIN
   ),
-  NotificationController.getNotificationByUser
+  NotificationController.getAllFromDB
 );
 
 export const notificationRoutes = router;
