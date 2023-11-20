@@ -9,7 +9,7 @@ const app: Application = express();
 
 app.use(
   cors({
-    origin: 'http://localhost:3000',
+    origin: 'https://house-crafters-frontend-ivory.vercel.app',
     credentials: true,
   })
 );
