@@ -1,0 +1,431 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  fullName         String
+  email            String            @unique
+  contactNumber    String
+  password         String
+  gender           Gender
+  profileImageUrl  String
+  address          String
+  role             UserRole          @default(customer)
+  teamMembers      TeamMember[]
+  bookings         Booking[]
+  reviewAndRatings ReviewAndRating[]
+  notifications    Notification[]
+  feedbacks        Feedback[]
+
+  @@map("users")
+}
+
+model TeamMember {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  age        String
+  dob        String
+  experience String
+  history    String
+
+  userId String
+  user   Users  @relation(fields: [userId], references: [id])
+
+  specializationId String
+  specialization   Specialization @relation(fields: [specializationId], references: [id])
+
+  serviceTeamId String
+  serviceTeam   ServiceTeam @relation(fields: [serviceTeamId], references: [id])
+
+  @@unique([userId, serviceTeamId])
+  @@map("team_member")
+}
+
+model Specialization {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  title       String       @unique
+  description String
+  teamMembers TeamMember[]
+
+  @@map("specialization")
+}
+
+model ServiceTeam {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  teamName String @unique
+
+  teamMembers       TeamMember[]
+  serviceSchedule   Slot[]
+  teamNotifications TeamNotification[]
+
+  @@map("service_team")
+}
+
+model ServiceCategory {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  categoryName  String     @unique
+  description   String?
+  categoryImage String
+  services      Service[]
+  blogPosts     BlogPost[]
+
+  @@map("service_category")
+}
+
+model Service {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  serviceName String @unique
+  description String
+  price       Float
+  imageUrl    String
+
+  serviceCategoryId String
+  serviceCategory   ServiceCategory    @relation(fields: [serviceCategoryId], references: [id])
+  availableServices AvailableService[]
+  upcomingServices  UpcomingService[]
+
+  @@map("service")
+}
+
+model AvailableService {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  isFeatured  Boolean @default(false)
+  isAvailable Boolean @default(true)
+
+  totalServiceProvided Int @default(100)
+
+  categoryId  String?
+  price       Float?
+  serviceName String?
+
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  bookings         Booking[]
+  reviewAndRatings ReviewAndRating[]
+  stat             Stats?
+  showcaseWorks    ShowcaseWork[]
+  slots            Slot[]
+
+  @@map("available_sevice")
+}
+
+model UpcomingService {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  status Boolean @default(true)
+
+  @@map("upcoming_service")
+}
+
+model Slot {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  startTime String
+
+  serviceTeamId String
+  serviceTeam   ServiceTeam @relation(fields: [serviceTeamId], references: [id])
+
+  availableServiceId String
+  availableService   AvailableService @relation(fields: [availableServiceId], references: [id])
+  bookings           Booking[]
+
+  @@unique([startTime, serviceTeamId, availableServiceId])
+  @@map("slot")
+}
+
+model Booking {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  date    String
+  weekDay String?
+  time    String?
+  status  BookingStatus @default(pending)
+
+  userId String
+  user   Users  @relation(fields: [userId], references: [id])
+
+  slotId String
+  slot   Slot   @relation(fields: [slotId], references: [id])
+
+  serviceId String
+  service   AvailableService @relation(fields: [serviceId], references: [id])
+  payment   Payment?
+
+  @@unique([userId, date, serviceId])
+  @@map("booking")
+}
+
+model Payment {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  paymentStatus PaymentStatus @default(notPaid)
+  paymentDate   String?
+  paymentMethod PaymentMethod
+  transactionId String?
+
+  bookingId String  @unique
+  booking   Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("payment")
+}
+
+model ReviewAndRating {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  userId String
+  user   Users  @relation(fields: [userId], references: [id])
+
+  serviceId String
+  service   AvailableService @relation(fields: [serviceId], references: [id])
+
+  rating Int
+  review String
+
+  @@map("review_and_rating")
+}
+
+model Feedback {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  comment String
+  userId  String
+  user    Users  @relation(fields: [userId], references: [id])
+
+  @@map("feedback")
+}
+
+model BlogPost {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  title      String
+  authorName String
+  imageUrl   String?
+  blogLink   String
+
+  categoryId      String
+  serviceCategory ServiceCategory @relation(fields: [categoryId], references: [id])
+
+  @@map("blog_post")
+}
+
+model Faq {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  question String
+  answer   String
+
+  @@map("faq")
+}
+
+model Stats {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  bestSellingServiceId String           @unique
+  bestSellingService   AvailableService @relation(fields: [bestSellingServiceId], references: [id])
+  totalClient          Int
+  totalServiceProvided Int              @default(1000)
+  totalServices        Int?             @default(25)
+
+  @@map("stats")
+}
+
+model FeatuedIn {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  title    String
+  imageUrl String?
+  siteLink String?
+
+  @@map("featured_in")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  userId String
+  user   Users  @relation(fields: [userId], references: [id])
+
+  readStatus Boolean            @default(false)
+  message    String
+  type       NotificationStatus
+
+  @@map("notification")
+}
+
+model TeamNotification {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  teamId String
+  team   ServiceTeam @relation(fields: [teamId], references: [id])
+
+  readStatus Boolean            @default(false)
+  message    String
+  type       NotificationStatus
+
+  @@map("team_notification")
+}
+
+model WebsiteContent {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  aboutUsText      String?
+  aboutUsImage     String?
+  ceoStatement     String?
+  ceoName          String?
+  ceoImage         String?
+  companyAddress   String?
+  companyContactNo String?
+  companyEmail     String?
+  footerText       String?
+
+  @@map("website_content")
+}
+
+model WesiteBannerContent {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  headingOne    String?
+  subHeadingOne String?
+  imageUrlOne   String?
+
+  headingTwo    String?
+  subHeadingTwo String?
+  imageUrlTwo   String?
+
+  headingThree    String?
+  subHeadingThree String?
+  imageUrlThree   String?
+
+  @@map("website_header_content")
+}
+
+model PrivacyPolicy {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  policyName String
+
+  @@map("privacy_policy")
+}
+
+model ShowcaseWork {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  serviceId String
+  service   AvailableService @relation(fields: [serviceId], references: [id])
+
+  imageUrl    String
+  description String
+
+  @@map("showcase_work")
+}
+
+enum Gender {
+  male
+  female
+  others
+}
+
+enum UserRole {
+  admin
+  customer
+  super_admin
+  team_member
+}
+
+enum WeekDays {
+  saturday
+  sunday
+  monday
+  tuesday
+  wednesday
+  thursday
+  friday
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  rejected
+}
+
+enum PaymentStatus {
+  paid
+  notPaid
+  rejected
+}
+
+enum PaymentMethod {
+  cashOnDelivery
+  online
+}
+
+enum NotificationStatus {
+  booking
+  confirmation
+  reminder
+}
